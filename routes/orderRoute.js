@@ -12,10 +12,14 @@ router.get('/allOrders', async (req, res) => {
 
         const ordersWithUserDetails = await Promise.all(
             allOrders.map(async (order) => {
-                const userDetails = await Users.findById(order.user).lean();
+
+                const calculatedTotalAmount = order.items.reduce((total, item) => {
+                    return total + item.units * item.selling_price;
+                }, 0);
+
                 return {
                     ...order.toObject(),
-                    userDetails
+                    calculatedTotalAmount
                 };
             })
         );
