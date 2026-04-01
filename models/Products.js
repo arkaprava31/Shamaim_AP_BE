@@ -4,6 +4,7 @@ const productSchema = new mongoose.Schema({
   id: { type: Number, required: true, unique: true },
   title: { type: String, required: true },
   Style: { type: String, required: true },
+  isSolid: { type: Boolean, default: false },
   genre: { type: [String], required: true },
   ProductCode: { type: String, required: true },
   SleeveLength: { type: String, required: true },
