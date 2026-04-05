@@ -2,6 +2,9 @@ const express = require('express');
 const mongoose = require('mongoose');
 const Products = require('../models/Products');
 
+const admin = require('../utils/firebaseAdmin');
+const { getStorage } = require("firebase-admin/storage");
+
 const router = express.Router();
 
 router.post('/newProduct', async (req, res) => {
@@ -79,17 +82,68 @@ router.delete('/deleteProduct/:_id', async (req, res) => {
     try {
         const { _id } = req.params;
 
-        const deletedProduct = await Products.findByIdAndDelete(_id);
+        console.log("Delete request received for product ID:", _id);
 
-        if (!deletedProduct) {
+        const product = await Products.findById(_id);
+
+        if (!product) {
+            console.log("Product not found in DB");
             return res.status(404).json({ message: 'Product not found!' });
         }
 
+        console.log("Product found:", product.title);
+
+        const bucket = getStorage().bucket();
+
+        console.log("Bucket name:", bucket.name);
+
+        // Delete thumbnail
+        if (product.thumbnail) {
+            try {
+                const filePath = decodeURIComponent(
+                    product.thumbnail.split("/o/")[1].split("?")[0]
+                );
+
+                console.log("Deleting thumbnail:", filePath);
+
+                await bucket.file(filePath).delete();
+
+                console.log("Thumbnail deleted successfully");
+            } catch (err) {
+                console.log("Error deleting thumbnail:", err.message);
+            }
+        }
+
+        // Delete product images
+        if (product.images && product.images.length > 0) {
+            for (const img of product.images) {
+                try {
+                    const filePath = decodeURIComponent(
+                        img.split("/o/")[1].split("?")[0]
+                    );
+
+                    console.log("Deleting image:", filePath);
+
+                    await bucket.file(filePath).delete();
+
+                    console.log("Image deleted successfully");
+                } catch (err) {
+                    console.log("Error deleting image:", err.message);
+                }
+            }
+        }
+
+        // Delete product from DB
+        const deletedProduct = await Products.findByIdAndDelete(_id);
+
+        console.log("Product removed from database");
+
         res.status(200).json({ message: 'Product deleted successfully' });
+
     } catch (error) {
-        console.log(error);
+        console.log("Server error while deleting product:", error);
         res.status(500).json({ message: 'Server error' });
     }
-})
+});
 
 module.exports = router;
