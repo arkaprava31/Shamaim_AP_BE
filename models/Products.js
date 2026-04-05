@@ -20,11 +20,7 @@ const productSchema = new mongoose.Schema({
   gender: { type: String, enum: ['Male', 'Female'], required: true },
   color: { type: String, required: true },
   size: { type: [String], required: true },
-  stock: {
-    M: { type: Number, default: 0 },
-    L: { type: Number, default: 0 },
-    XL: { type: Number, default: 0 },
-  },
+  stock: { type: Object, default: {} },
   category: { type: String, required: true },
   subcategory: { type: String, required: true },
   price: { type: Number, required: true },
